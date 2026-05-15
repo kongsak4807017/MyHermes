@@ -1,0 +1,39 @@
+# Hermes runtime files (don't sync)
+.env
+auth.json
+auth.lock
+.hermes_history
+.update_check
+context_length_cache.yaml
+models_dev_cache.json
+ollama_cloud_models_cache.json
+processes.json
+sessions/
+logs/
+memories/
+checkpoints/
+state-snapshots/
+cron/
+pastes/
+shared/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# Node
+node_modules/

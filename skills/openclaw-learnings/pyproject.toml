@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "omk"
+version = "0.1.0"
+description = "OMK — Operational Monitoring & Knowledge CLI for Hermes Agent"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Hermes Agent"},
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "rich>=13.0.0",
+    "psutil>=5.9.0",
+]
+
+[project.scripts]
+omk = "omk.cli:main"
+
+[project.urls]
+"Homepage" = "https://github.com/NousResearch/hermes-agent"
+"Documentation" = "https://hermes-agent.nousresearch.com/"
+
+[tool.setuptools.packages.find]
+include = ["omk*"]

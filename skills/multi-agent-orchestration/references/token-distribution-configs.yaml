@@ -1,0 +1,111 @@
+# Token Distribution Config Patterns for Hermes Multi-Agent
+# Used to distribute API usage across providers to avoid rate limits
+
+# Pattern 1: Parent (Kimi) + OpenRouter Free Subagents
+# Best for: Kimi users with 5-hour rate limits
+model:
+  default: kimi-for-coding
+  provider: kimi-coding
+  base_url: https://api.kimi.com/coding
+
+delegation:
+  model: google/gemini-2.5-flash-preview:free
+  provider: openrouter
+  max_concurrent_children: 3
+  max_iterations: 50
+  child_timeout_seconds: 600
+  reasoning_effort: none
+  max_spawn_depth: 1
+  orchestrator_enabled: true
+  subagent_auto_approve: false
+  fallback_providers:
+    - provider: openrouter
+      model: huggingfaceh4/zephyr-7b-beta:free
+      base_url: https://openrouter.ai/api/v1
+      api_key: ${OPENROUTER_API_KEY}
+
+---
+
+# Pattern 2: With HuggingFace Pro ($2/day) as additional fallback
+# Requires HF Pro subscription ($9/month)
+model:
+  default: kimi-for-coding
+  provider: kimi-coding
+  base_url: https://api.kimi.com/coding
+
+providers:
+  huggingface:
+    name: HuggingFace Inference
+    base_url: https://router.huggingface.co/v1
+    transport: openai_chat
+    key_env: HF_TOKEN
+    api: https://router.huggingface.co/v1
+    model: meta-llama/Llama-3.2-3B-Instruct
+    skip_model_validation: true
+    custom_model: true
+    models:
+      - meta-llama/Llama-3.2-3B-Instruct
+      - meta-llama/Llama-3.1-8B-Instruct
+      - microsoft/Phi-4-mini-instruct
+    default_model: meta-llama/Llama-3.2-3B-Instruct
+    api_key: ${HF_TOKEN}
+
+delegation:
+  model: google/gemini-2.5-flash-preview:free
+  provider: openrouter
+  max_concurrent_children: 3
+  max_iterations: 50
+  fallback_providers:
+    - provider: huggingface
+      model: meta-llama/Llama-3.1-8B-Instruct
+      base_url: https://api-inference.huggingface.co/v1
+      api_key: ${HF_TOKEN}
+
+---
+
+# Pattern 3: DeepSeek Free as primary subagent (cheapest)
+model:
+  default: claude-sonnet-4
+  provider: anthropic
+
+delegation:
+  model: deepseek/deepseek-chat:free
+  provider: openrouter
+  max_concurrent_children: 3
+  max_iterations: 50
+  fallback_providers:
+    - provider: openrouter
+      model: google/gemini-2.5-flash-preview:free
+      base_url: https://openrouter.ai/api/v1
+      api_key: ${OPENROUTER_API_KEY}
+
+---
+
+# Free Tier Limits (as of May 2026)
+# Provider              | Requests/min | Daily Quota | Notes
+# ----------------------|-------------|-------------|------------------------
+# OpenRouter Gemini free| 20          | ~1000       | May block some regions
+# OpenRouter DeepSeek   | 10          | ~500        | Slower response
+# HF Pro Serverless     | 60          | $2/day      | Requires Pro sub
+# HF Free               | 5           | ~100        | Very limited
+
+---
+
+# Auto-Delegate Guidance Injection
+# Add to agent/prompt_builder.py:
+#
+# DELEGATION_GUIDANCE = (
+#     "You have access to delegate_task — spawn parallel subagents to offload work. "
+#     "Use it automatically when:\n"
+#     "- The task has 2+ independent parts that can run in parallel\n"
+#     "- A subtask is reasoning-heavy and would flood your context\n"
+#     "- You need to research multiple topics simultaneously\n"
+#     "- You need to verify your own work by having another agent review it\n"
+#     "- The task involves file operations across multiple directories\n"
+#     "Do NOT delegate for: single-step work, trivial tasks, or re-delegating your entire goal.\n"
+#     "When delegating, pass clear goals and relevant context."
+# )
+#
+# Then in run_agent.py _build_system_prompt():
+# if "delegate_task" in self.valid_tool_names:
+#     tool_guidance.append(DELEGATION_GUIDANCE)
