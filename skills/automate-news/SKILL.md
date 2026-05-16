@@ -26,20 +26,22 @@ Automated content creation pipeline for Hermes. Transform any topic into a video
 ## Quick start
 
 ```bash
-# Standard news
-hermes-news "AI ครองโลก" --mode standard --lang th
+# Full pipeline (trend → script → media → audio → video → SEO)
+hermes-news --topic "AI ครองโลก" --mode standard --lang th --all
 
-# Expert analysis
-hermes-news "เศรษฐกิจไทย 2026" --mode expert --lang th --lens economy
+# Step by step
+hermes-news --step trend --category news                    # Find trends
+hermes-news --step script --topic "น้ำท่วมกรุงเทพ" --lang th  # Generate script
+hermes-news --step media --topic "น้ำท่วม"                   # Search images
+hermes-news --step audio --script-file script.md --lang th  # Generate audio
+hermes-news --step video --audio-file audio.wav --media-dir ./media  # Assemble video
+hermes-news --step seo --topic "น้ำท่วม" --script-file script.md     # YouTube SEO
 
-# Knowledge (นานาสาระ)
-hermes-news "ทำไมท้องฟ้าถึงเป็นสีฟ้า" --mode knowledge --lang th
+# Pre-downloaded media workflow
+hermes-news --topic "ดาวอังคาร" --mode knowledge --media-dir ~/Pictures/mars --duration 178 --aspect 9:16
 
-# Survival
-hermes-news "เอาตัวรอดในป่า" --mode survival --lang th
-
-# Direct TTS (paste your own script)
-hermes-news --mode direct --script-file myscript.txt --lang th
+# Direct from script
+hermes-news --mode direct --script-file myscript.txt --voice gcloud-th-female --duration 178
 ```
 
 ## Generation Modes
@@ -47,87 +49,119 @@ hermes-news --mode direct --script-file myscript.txt --lang th
 | Mode | Description | Best for |
 |------|-------------|----------|
 | `standard` | Professional news reporting | Daily news, breaking stories |
-| `friend` | Casual conversation style | Social media, engaging content |
-| `expert` | Deep analysis with expert lenses | Complex topics, investigations |
 | `knowledge` | Educational content (นานาสาระ) | Facts, science, history |
 | `survival` | Practical survival skills | How-to, emergency preparedness |
-| `direct` | Your own script → audio/video | Custom content |
-
-## Expert Lenses (for expert mode)
-
-| Lens | Focus |
-|------|-------|
-| `economy` | Economic impact, financial analysis |
-| `politics` | Political implications, policy analysis |
-| `technology` | Tech angle, innovation assessment |
-| `social` | Social impact, community effects |
-| `environment` | Environmental factors, sustainability |
-| `health` | Health implications, medical perspective |
-| `legal` | Legal framework, regulatory impact |
-| `history` | Historical context, precedent analysis |
-
-## Commands
-
-### Generate Content
-
-```bash
-hermes-news <topic> [options]
-
-Options:
-  --mode, -m        Generation mode (standard|friend|expert|knowledge|survival|direct)
-  --lang, -l        Language (th|en)
-  --voice, -v       TTS voice (edge-th-female|edge-th-male|gcloud-th-female|gemini)
-  --length          Script length (1min|3min|5min|10min)
-  --lens            Expert lens (for expert mode)
-  --output, -o      Output directory
-  --script-file     Input script file (for direct mode)
-  --tone            Emotional tone (neutral|serious|excited|calm|urgent)
-```
-
-### Examples
-
-```bash
-# Thai news with female voice
-hermes-news "น้ำท่วมกรุงเทพ" --mode standard --lang th --voice edge-th-female
-
-# Expert analysis on economy
-hermes-news "คริปโตขาลง" --mode expert --lens economy --lang th
-
-# Knowledge video about space
-hermes-news "ดาวอังคาร" --mode knowledge --lang th --length 5min
-
-# Survival guide
-hermes-news "เอาตัวรอดจากแผ่นดินไหว" --mode survival --lang th
-
-# Direct TTS from file
-hermes-news --mode direct --script-file script.txt --voice gcloud-th-female
-```
+| `viral` | Viral-style content | Maximum engagement, TikTok/Shorts |
 
 ## Workflow
 
 ```
-1. Research → Gemini searches web for current info
-2. Script → AI writes engaging script based on mode
-3. Audio → TTS generates voiceover
-4. Visuals → Search for relevant images/video clips
-5. Video → FFmpeg assembles final video
-6. SEO → Generate YouTube title/description/tags
+1. TREND RESEARCH → Find hot topics (Gemini + Google Search)
+2. SCRIPT → AI writes engaging script with visual cues
+3. MEDIA → Search/download images & videos
+4. AUDIO → TTS generates voiceover
+5. VIDEO → FFmpeg assembles with visualizer + overlays
+6. YOUTUBE SEO MAX → Titles, tags, description, thumbnail, community post
 ```
 
 ## Output Structure
 
 ```
 output/
+├── trends.json         # Trending topics
 ├── script.md           # Generated script
+├── script.json         # Script metadata + visual cues
+├── media/              # Downloaded images/videos
+├── media.json          # Media file list
 ├── audio.wav           # Voiceover audio
-├── visuals/            # Downloaded images
 ├── video.mp4           # Final video
-├── seo.json            # YouTube metadata
-└── citations.json      # Source references
+├── seo.json            # YouTube MAX SEO metadata
+└── README.md           # Upload instructions
+```
+
+## YouTube SEO MAX Output
+
+```json
+{
+  "title": "Main title (60 chars)",
+  "title_alt": ["Alt 1", "Alt 2"],
+  "description": "Full description with timestamps...",
+  "tags": ["tag1", "tag2", ...],
+  "thumbnail_text": "3-5 words",
+  "thumbnail_colors": ["#FF0000", "#FFFFFF"],
+  "playlists": ["Playlist 1", "Playlist 2"],
+  "end_screen": {
+    "videos": ["Related topic 1", "Related topic 2"],
+    "subscribe_cta": "Subscribe text"
+  },
+  "community_post": "Teaser for Community tab"
+}
+```
+
+## Commands
+
+### Full Pipeline
+
+```bash
+# Everything in one command
+python3 ~/.hermes/skills/automate-news/scripts/news_pipeline.py \
+  --topic "AI ครองโลก" --mode standard --lang th --all
+
+# Shorts/Reels optimized (178 seconds)
+python3 ~/.hermes/skills/automate-news/scripts/news_pipeline.py \
+  --topic "ดาวอังคาร" --mode knowledge --lang th \
+  --duration 178 --aspect 9:16 --voice edge-th-female
+```
+
+### Step by Step
+
+```bash
+# 1. Find trends
+python3 ~/.hermes/skills/automate-news/scripts/news_pipeline.py --step trend --category news
+
+# 2. Generate script
+python3 ~/.hermes/skills/automate-news/scripts/news_pipeline.py \
+  --step script --topic "น้ำท่วมกรุงเทพ" --mode standard --lang th
+
+# 3. Search media
+python3 ~/.hermes/skills/automate-news/scripts/news_pipeline.py \
+  --step media --topic "น้ำท่วมกรุงเทพ"
+
+# 4. Generate audio
+python3 ~/.hermes/skills/automate-news/scripts/news_pipeline.py \
+  --step audio --script-file output/script.md --voice edge-th-female
+
+# 5. Assemble video
+python3 ~/.hermes/skills/automate-news/scripts/news_pipeline.py \
+  --step video --audio-file output/audio.wav --media-dir output/media \
+  --duration 178 --aspect 9:16
+
+# 6. YouTube SEO
+python3 ~/.hermes/skills/automate-news/scripts/news_pipeline.py \
+  --step seo --topic "น้ำท่วมกรุงเทพ" --script-file output/script.md
+```
+
+### Pre-downloaded Media
+
+```bash
+# Use your own images/videos
+python3 ~/.hermes/skills/automate-news/scripts/news_pipeline.py \
+  --topic "ดาวอังคาร" --mode knowledge \
+  --media-dir ~/Pictures/mars-photos \
+  --duration 178 --aspect 9:16
+```
+
+## Environment Variables
+
+```bash
+export GEMINI_API_KEY="your-gemini-key"
+export GOOGLE_TTS_API_KEY="your-google-tts-key"
+export PERPLEXITY_API_KEY="your-perplexity-key"  # Optional
 ```
 
 ## Resources
 
 - Original app: https://github.com/kongsak4807017/Automate-News
+- Video assembler: mp3_to_mv_gui_v5.py (FFmpeg-based)
 - Gemini API: https://ai.google.dev
 - Edge TTS: https://github.com/rany2/edge-tts
